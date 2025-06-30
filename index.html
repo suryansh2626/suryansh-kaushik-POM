@@ -1,0 +1,639 @@
+import React, { useState, useEffect, createContext, useContext } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { createPortal } from 'react-dom';
+
+// NProgress styles and configuration (Simulated)
+// This is a placeholder for a real progress bar library like NProgress.
+const NProgress = {
+  start: () => { console.log('NProgress: Start'); },
+  done: () => { console.log('NProgress: Done'); },
+};
+
+// Lucide React Icons (Simulated for single-file setup)
+const Sun = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-sun">
+    <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+  </svg>
+);
+const Moon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-moon">
+    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+  </svg>
+);
+const Search = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-search">
+    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+  </svg>
+);
+
+// Data for Principles with updated, relevant images from Unsplash
+const principlesData = [
+  {
+    id: 'division-of-work',
+    title: '1. Division of Work',
+    shortDescription: 'Specialization leads to efficiency.',
+    definition: 'Division of Work suggests that work should be divided among individuals and groups to ensure specialization and improve efficiency. This principle emphasizes that each employee should perform a specific task or a limited set of tasks rather than attempting to do everything.',
+    tataExample: 'Tata Motors: In its vehicle manufacturing plants, different departments specialize in various stages of production—design, engine assembly, body fabrication, painting, and quality control. This specialization enhances expertise, reduces errors, and speeds up the production process, leading to higher efficiency and better quality vehicles.',
+    illustration: 'https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=800&auto=format&fit=crop',
+  },
+  {
+    id: 'authority-and-responsibility',
+    title: '2. Authority and Responsibility',
+    shortDescription: 'Power to command comes with accountability.',
+    definition: 'Authority is the right to give orders, and responsibility is the obligation to carry them out. This principle states that authority and responsibility must go hand-in-hand; one cannot exist without the other. Effective management requires a balance between the power granted and the accountability for actions taken.',
+    tataExample: 'Tata Steel: A plant manager is given the authority to make decisions regarding daily operations, production targets, and resource allocation within their unit. With this authority comes the responsibility for meeting production quotas, maintaining safety standards, and managing the team effectively. If production targets are not met, the manager is held accountable.',
+    illustration: 'https://images.unsplash.com/photo-1542744095-291d1f67b221?q=80&w=800&auto=format&fit=crop',
+  },
+    {
+    id: 'discipline',
+    title: '3. Discipline',
+    shortDescription: 'Obedience and respect for organizational rules.',
+    definition: 'Discipline refers to obedience to organizational rules, respect for authority, and adherence to established agreements. It is essential for the smooth functioning of any organization and requires good superiors at all levels, clear and fair agreements, and judicious application of penalties.',
+    tataExample: 'Tata Consultancy Services (TCS): TCS maintains strict adherence to project deadlines, coding standards, and client communication protocols. Employees are expected to follow established procedures and ethical guidelines. Any deviation is addressed through performance reviews and corrective actions.',
+    illustration: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=800&auto=format&fit=crop',
+  },
+  {
+    id: 'unity-of-command',
+    title: '4. Unity of Command',
+    shortDescription: 'One employee, one supervisor.',
+    definition: 'This principle states that an employee should receive orders from only one superior. Receiving commands from multiple superiors can lead to confusion, conflict, and a breakdown in organizational efficiency. It ensures clear lines of authority and avoids conflicting instructions.',
+    tataExample: 'Tata Chemicals: An employee in the R&D department reports directly to the Head of Research. They do not take orders from the Head of Production or Marketing. This clear reporting structure prevents confusion and ensures alignment with departmental goals.',
+    illustration: 'https://images.unsplash.com/photo-1587560699343-6d112a76f5a3?q=80&w=800&auto=format&fit=crop',
+  },
+  {
+    id: 'unity-of-direction',
+    title: '5. Unity of Direction',
+    shortDescription: 'One plan for a group of activities.',
+    definition: 'This principle states that there should be one head and one plan for a group of activities having the same objective. It ensures coordination and focus on a common goal within a specific division or department, avoiding duplicated efforts and conflicting strategies.',
+    tataExample: 'Tata Power: For a new solar power project, all teams involved—engineering, procurement, construction, and finance—work under a single project manager and follow a unified project plan to achieve the common objective of commissioning the solar plant.',
+    illustration: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=800&auto=format&fit=crop',
+  },
+  {
+    id: 'subordination-of-individual-interest',
+    title: '6. Subordination of Individual Interest',
+    shortDescription: 'Organizational goals over personal goals.',
+    definition: 'The interests of the organization as a whole should take precedence over the interests of any single employee or group of employees. This principle emphasizes the importance of aligning individual objectives with the broader organizational objectives.',
+    tataExample: 'Tata Motors: During an economic downturn, employees might be asked to take a temporary pay cut or work extended hours to help the company navigate financial challenges. This serves the larger interest of the company\'s survival and long-term stability.',
+    illustration: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?q=80&w=800&auto=format&fit=crop',
+  },
+  {
+    id: 'remuneration',
+    title: '7. Remuneration',
+    shortDescription: 'Fair and equitable pay for employees.',
+    definition: 'Employees should be paid a fair wage for their services. Remuneration should be equitable and provide satisfaction to both the employees and the employer. It can be financial or non-financial and should motivate employees to perform better.',
+    tataExample: 'Tata Communications: The company offers competitive salaries, performance-based bonuses, and comprehensive benefits packages. This fair remuneration structure motivates employees, reduces turnover, and attracts top talent.',
+    illustration: 'https://images.unsplash.com/photo-1554224155-1696413565d3?q=80&w=800&auto=format&fit=crop',
+  },
+  {
+    id: 'centralization',
+    title: '8. Centralization',
+    shortDescription: 'Concentration of decision-making authority.',
+    definition: 'Centralization refers to the concentration of decision-making authority at the top level of management. An appropriate balance between centralization and decentralization is key, depending on the organization\'s needs.',
+    tataExample: 'Tata Group: Strategic decisions like major acquisitions (e.g., Jaguar Land Rover) are centralized and made by the top management at Tata Sons. This ensures consistency in the group\'s overall strategic direction.',
+    illustration: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=800&auto=format&fit=crop',
+  },
+  {
+    id: 'scalar-chain',
+    title: '9. Scalar Chain',
+    shortDescription: 'Hierarchical line of authority.',
+    definition: 'The scalar chain refers to the formal line of authority from the highest to the lowest ranks. It specifies the clear chain of command. A "gang plank" can be used for quick communication between employees at the same level.',
+    tataExample: 'Taj Hotels: A room service attendant reports to the F&B Supervisor, who reports to the F&B Manager, and so on, up to the CEO. This clear hierarchical structure ensures proper communication flow and accountability.',
+    illustration: 'https://images.unsplash.com/photo-1616401776146-ae146e2a18a2?q=80&w=800&auto=format&fit=crop',
+  },
+  {
+    id: 'order',
+    title: '10. Order',
+    shortDescription: 'A place for everyone and everything.',
+    definition: 'This principle emphasizes a systematic arrangement of people and materials. "A place for everyone and everyone in his or her place" (social order), and "a place for everything and everything in its place" (material order).',
+    tataExample: 'Tata Chemicals: In its plants, raw materials and finished products are stored in designated locations with proper labeling and inventory systems. This meticulous arrangement ensures that materials are easily accessible, streamlining production.',
+    illustration: 'https://images.unsplash.com/photo-1542337839-a86c27170139?q=80&w=800&auto=format&fit=crop',
+  },
+  {
+    id: 'equity',
+    title: '11. Equity',
+    shortDescription: 'Fairness and kindness to employees.',
+    definition: 'Employees should be treated kindly and justly. Managers should be fair and impartial. Equity combines justice with kindness, ensuring employees are motivated and loyal. It avoids discrimination and fosters a harmonious work environment.',
+    tataExample: 'Tata Steel: The company has policies promoting diversity, inclusion, and equal opportunities. Performance appraisals are based on objective criteria, and promotions are merit-based, fostering a sense of trust and fairness.',
+    illustration: 'https://images.unsplash.com/photo-1600880292203-942bb68b3131?q=80&w=800&auto=format&fit=crop',
+  },
+  {
+    id: 'stability-of-tenure',
+    title: '12. Stability of Tenure of Personnel',
+    shortDescription: 'Minimize employee turnover.',
+    definition: 'Employee turnover should be minimized to ensure efficiency. High turnover leads to increased recruitment/training costs. Providing job security and career development helps retain valuable employees.',
+    tataExample: 'Tata Motors: The company invests significantly in employee training and development programs and provides long-term career paths. This reduces employee turnover and builds a stable, knowledgeable workforce.',
+    illustration: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800&auto=format&fit=crop',
+  },
+  {
+    id: 'initiative',
+    title: '13. Initiative',
+    shortDescription: 'Encourage employee innovation and suggestions.',
+    definition: 'Employees should be encouraged to take initiative, i.e., to think out a plan and execute it. This principle fosters creativity and innovation. Managers should provide opportunities for employees to suggest and implement their ideas.',
+    tataExample: 'Tata Motors: The company encourages its engineers to propose innovative solutions for vehicle design or fuel efficiency. Employees are given autonomy to research and develop new concepts, fostering innovation.',
+    illustration: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=800&auto=format&fit=crop',
+  },
+  {
+    id: 'esprit-de-corps',
+    title: '14. Esprit de Corps',
+    shortDescription: 'Promote teamwork and unity.',
+    definition: 'This principle emphasizes the importance of teamwork and harmony. "Union is strength." Managers should strive to build morale and foster a sense of unity and belonging, encouraging cooperation rather than competition.',
+    tataExample: 'Tata Steel: The company promotes teamwork through cross-functional projects and celebrating collective achievements. This strong sense of unity and shared purpose enhances productivity and problem-solving.',
+    illustration: 'https://images.unsplash.com/photo-1549923746-c502d488b3ea?q=80&w=800&auto=format&fit=crop',
+  },
+];
+
+// Context for Dark/Light Mode
+const ThemeContext = createContext();
+
+const ThemeProvider = ({ children }) => {
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem('theme');
+    return savedTheme === 'dark'; // Defaults to light mode if nothing is saved
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => setIsDarkMode(prevMode => !prevMode);
+
+  return (
+    <ThemeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+
+// Global Router Context
+const RouterContext = createContext();
+
+const Router = ({ children, initialPath = '/' }) => {
+  const [currentPath, setCurrentPath] = useState(initialPath);
+
+  const navigate = (path) => {
+    NProgress.start();
+    setCurrentPath(path);
+    setTimeout(() => NProgress.done(), 300);
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      NProgress.start();
+      setCurrentPath(window.location.pathname);
+      setTimeout(() => NProgress.done(), 300);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  return (
+    <RouterContext.Provider value={{ currentPath, navigate }}>
+      {children}
+    </RouterContext.Provider>
+  );
+};
+
+const useRouter = () => useContext(RouterContext);
+
+// Preloader Component
+const Preloader = ({ setLoading }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 2500);
+    return () => clearTimeout(timer);
+  }, [setLoading]);
+
+  return createPortal(
+    <motion.div
+      initial={{ opacity: 1 }}
+      animate={{ opacity: 0 }}
+      exit={{ opacity: 0, transition: { duration: 0.5, delay: 2 } }}
+      transition={{ duration: 0.5, delay: 2 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900"
+    >
+      <motion.div
+        initial={{ scale: 0, rotate: 0 }}
+        animate={{ scale: [0, 1.2, 1], rotate: [0, 180, 360] }}
+        transition={{ duration: 1.5, ease: "easeInOut", repeat: Infinity, repeatDelay: 0.5 }}
+        className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg"
+      >
+        <span className="text-4xl font-bold text-teal-600">F</span>
+      </motion.div>
+    </motion.div>,
+    document.body
+  );
+};
+
+// Navbar Component
+const Navbar = () => {
+  const { navigate, currentPath } = useRouter();
+  const { toggleDarkMode, isDarkMode } = useContext(ThemeContext);
+
+  const navItems = [
+    { name: 'Home', path: '/' },
+    { name: 'Principles', path: '/principles' },
+    { name: 'Summary', path: '/summary' },
+    { name: 'Bibliography', path: '/bibliography' },
+  ];
+
+  return (
+    <nav className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg shadow-sm py-4 px-6 md:px-12 fixed w-full z-40 transition-colors duration-300">
+      <div className="container mx-auto flex justify-between items-center">
+        <motion.a
+          whileHover={{ scale: 1.05 }}
+          className="text-2xl font-bold text-teal-600 dark:text-teal-400 cursor-pointer"
+          onClick={() => navigate('/')}
+        >
+          Fayol's Principles
+        </motion.a>
+        <div className="flex items-center space-x-6">
+          <ul className="hidden md:flex space-x-8">
+            {navItems.map((item) => (
+              <motion.li key={item.name} whileHover={{ y: -2 }}>
+                <a
+                  onClick={() => navigate(item.path)}
+                  className={`text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 font-medium transition-colors duration-300 cursor-pointer relative ${
+                    currentPath === item.path ? 'text-teal-600 dark:text-teal-400' : ''
+                  }`}
+                >
+                  {item.name}
+                  {currentPath === item.path && (
+                    <motion.div
+                      className="absolute bottom-[-6px] left-0 right-0 h-0.5 bg-teal-500"
+                      layoutId="underline"
+                    />
+                  )}
+                </a>
+              </motion.li>
+            ))}
+          </ul>
+          <button
+            onClick={toggleDarkMode}
+            className="p-2 rounded-full text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 focus:outline-none transition-colors duration-300"
+            aria-label="Toggle dark mode"
+          >
+            {isDarkMode ? <Sun /> : <Moon />}
+          </button>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+// Footer Component
+const Footer = () => {
+  return (
+    <footer className="bg-slate-100 dark:bg-slate-900/50 py-12 text-slate-600 dark:text-slate-400 mt-12 transition-colors duration-300 border-t border-slate-200 dark:border-slate-800">
+      <div className="container mx-auto px-6 text-center">
+        <div className="mb-8">
+          <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-2 tracking-wide">
+            Business Studies Project
+          </h3>
+          <p className="text-lg text-teal-600 dark:text-teal-400 font-semibold">
+            Henri Fayol's 14 Principles of Management
+          </p>
+        </div>
+        <div className="mb-8 text-sm leading-relaxed">
+          <p className="font-semibold text-slate-700 dark:text-slate-300">Submitted by: Suryansh Kaushik</p>
+          <p>Class: 12th, Section A | Stream: Commerce</p>
+          <p>Subject Teacher: Mrs. Priyanka Arora</p>
+        </div>
+        <p className="text-xs">&copy; {new Date().getFullYear()} Fayol's Principles. All rights reserved.</p>
+      </div>
+    </footer>
+  );
+};
+
+// Pages
+const HomePage = () => {
+  const { navigate } = useRouter();
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-teal-100 dark:from-slate-900 dark:to-[#0d2925] transition-colors duration-300 pt-24 pb-12"
+    >
+      <div className="container mx-auto px-6 py-12 flex flex-col lg:flex-row items-center justify-between text-center lg:text-left">
+        <div className="lg:w-1/2 mb-10 lg:mb-0">
+          <motion.h1
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.7 }}
+            className="text-5xl md:text-6xl font-extrabold leading-tight text-slate-800 dark:text-white mb-6"
+          >
+            Unlocking Organizational Success:
+            <br />
+            <span className="text-teal-600 dark:text-teal-400">Fayol's 14 Principles</span>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5, duration: 0.7 }}
+            className="text-lg md:text-xl text-slate-600 dark:text-slate-300 mb-8 max-w-lg mx-auto lg:mx-0"
+          >
+            Explore the timeless wisdom of Henri Fayol's management principles, illustrated with real-world examples from the
+            <span className="font-bold text-teal-800 dark:text-teal-300"> Tata Group</span>.
+          </motion.p>
+          <motion.button
+            whileHover={{ scale: 1.05, boxShadow: '0 8px 25px rgba(20, 184, 166, 0.4)' }}
+            whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.5 }}
+            onClick={() => navigate('/principles')}
+            className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-8 rounded-full text-lg shadow-lg transform transition-all duration-300 ease-in-out"
+          >
+            Explore Principles
+          </motion.button>
+        </div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.8, duration: 0.8, type: "spring", stiffness: 100 }}
+          className="lg:w-1/2 flex justify-center"
+        >
+          <img
+            src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=1000&auto=format&fit=crop"
+            alt="Management Illustration"
+            className="rounded-xl shadow-2xl w-full max-w-md lg:max-w-none"
+            onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/600x450/cccccc/333333?text=Image+Not+Found"; }}
+          />
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+};
+
+const PrincipleCard = ({ principle, navigate }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.6 }}
+      whileHover={{ scale: 1.03, boxShadow: '0 0 30px rgba(20, 184, 166, 0.3)' }}
+      className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-xl shadow-lg flex flex-col text-center transition-all duration-300 border border-slate-200 dark:border-slate-700 overflow-hidden"
+    >
+      <img
+        src={principle.illustration}
+        alt={principle.title}
+        className="w-full h-40 object-cover"
+        onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/400x200/cccccc/333333?text=Img"; }}
+      />
+      <div className="p-6 flex flex-col flex-grow">
+          <h3 className="text-lg font-bold text-teal-700 dark:text-teal-400 mb-2">
+            {principle.title}
+          </h3>
+          <p className="text-slate-600 dark:text-slate-300 text-sm mb-4 flex-grow">
+            {principle.shortDescription}
+          </p>
+          <button
+            onClick={() => navigate(`/principle/${principle.id}`)}
+            className="mt-auto bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 px-6 rounded-full text-sm transition-colors duration-300 shadow-md"
+          >
+            Learn More
+          </button>
+      </div>
+    </motion.div>
+  );
+};
+
+const PrinciplesPage = () => {
+  const { navigate } = useRouter();
+  const [searchTerm, setSearchTerm] = useState('');
+  const filteredPrinciples = principlesData.filter(p =>
+    p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.shortDescription.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-slate-100 dark:bg-slate-900 py-12 pt-32 transition-colors duration-300"
+    >
+      <div className="container mx-auto px-6">
+        <h2 className="text-4xl font-extrabold text-center text-slate-800 dark:text-white mb-4">
+          The 14 Principles of Management
+        </h2>
+        <p className="text-center text-lg text-slate-600 dark:text-slate-400 mb-10">
+          Discover the foundational concepts that shape modern management.
+        </p>
+
+        <div className="relative max-w-lg mx-auto mb-12">
+          <input
+            type="text"
+            placeholder="Search principles..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-300 shadow-sm"
+          />
+          <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-500 dark:text-slate-400">
+            <Search />
+          </div>
+        </div>
+
+        {filteredPrinciples.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {filteredPrinciples.map((principle) => (
+              <PrincipleCard key={principle.id} principle={principle} navigate={navigate} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-xl text-slate-700 dark:text-slate-300 mt-10">
+            No principles found matching your search.
+          </p>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
+const PrincipleDetailPage = () => {
+  const { currentPath, navigate } = useRouter();
+  const principleId = currentPath.split('/principle/')[1];
+  const principle = principlesData.find(p => p.id === principleId);
+
+  if (!principle) { /* ... render not found page ... */ return null; }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 50 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -50 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-slate-100 dark:bg-slate-900 py-12 pt-32 transition-colors duration-300"
+    >
+      <div className="container mx-auto px-6 max-w-4xl">
+        <motion.h2
+          className="text-4xl font-extrabold text-center text-slate-800 dark:text-white mb-10"
+        >
+          {principle.title}
+        </motion.h2>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2, duration: 0.7 }}
+          className="bg-white dark:bg-slate-800 rounded-xl shadow-xl p-8 mb-8 border border-slate-200 dark:border-slate-700"
+        >
+          <div className="flex flex-col md:flex-row items-start gap-8">
+            <div className="md:w-2/5 flex-shrink-0">
+              <img
+                src={principle.illustration}
+                alt={principle.title}
+                className="w-full h-auto rounded-lg shadow-md"
+                onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/400x300/cccccc/333333?text=Illustration"; }}
+              />
+            </div>
+            <div className="md:w-3/5">
+              <h3 className="text-2xl font-bold text-teal-600 dark:text-teal-400 mb-4">Definition</h3>
+              <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-6">
+                {principle.definition}
+              </p>
+
+              <h3 className="text-2xl font-bold text-teal-600 dark:text-teal-400 mb-4">Tata Group Example</h3>
+              <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                {principle.tataExample}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        <div className="text-center mt-8">
+          <button
+            onClick={() => navigate('/principles')}
+            className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-6 rounded-full transition-colors duration-300 shadow-md transform hover:scale-105"
+          >
+            Back to All Principles
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+const SummaryPage = () => {
+    return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="min-h-screen bg-slate-100 dark:bg-slate-900 py-12 pt-32 transition-colors duration-300"
+    >
+      <div className="container mx-auto px-6 max-w-3xl">
+        <h2 className="text-4xl font-extrabold text-center text-slate-800 dark:text-white mb-10">
+          Summary of Fayol's 14 Principles
+        </h2>
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="bg-white dark:bg-slate-800 rounded-xl shadow-xl p-8 border border-slate-200 dark:border-slate-700"
+        >
+          <ul className="space-y-4 text-lg text-slate-700 dark:text-slate-300">
+            {principlesData.map((p) => (
+              <li key={p.id} className="border-b border-slate-200 dark:border-slate-700 pb-4 last:border-b-0">
+                <span className="font-semibold text-teal-600 dark:text-teal-400">{p.title}:</span> {p.shortDescription}
+              </li>
+            ))}
+          </ul>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+};
+
+const BibliographyPage = () => {
+    return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="min-h-screen bg-slate-100 dark:bg-slate-900 py-12 pt-32 transition-colors duration-300"
+    >
+      <div className="container mx-auto px-6 max-w-3xl">
+        <h2 className="text-4xl font-extrabold text-center text-slate-800 dark:text-white mb-10">
+          Bibliography
+        </h2>
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="bg-white dark:bg-slate-800 rounded-xl shadow-xl p-8 border border-slate-200 dark:border-slate-700"
+        >
+          <ul className="list-disc list-inside space-y-4 text-lg text-slate-700 dark:text-slate-300">
+            <li>Fayol, H. (1949). <cite>General and Industrial Management</cite>. Sir Isaac Pitman & Sons.</li>
+            <li>Tata Group Official Website: <a href="https://www.tata.com" target="_blank" rel="noopener noreferrer" className="text-teal-500 hover:underline">tata.com</a></li>
+            <li>Various Tata company websites (Tata Motors, TCS, Tata Steel, etc.) for operational examples.</li>
+            <li className="pt-4 text-sm text-slate-500">Note: Tata examples are illustrative interpretations based on publicly available information about their management practices.</li>
+          </ul>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+};
+
+
+// Main App Component
+function AppContent() {
+  const [loading, setLoading] = useState(true);
+  const { currentPath, navigate } = useRouter();
+
+  useEffect(() => {
+    // Dynamically update page title for better navigation context
+    let title = "Fayol's Principles";
+    if (currentPath.startsWith('/principle/')) {
+        const p = principlesData.find(p => p.id === currentPath.split('/')[2]);
+        if(p) title = `${p.title.split('. ')[1]} | Fayol's Principles`;
+    } else if (currentPath !== '/') {
+        title = `${currentPath.charAt(1).toUpperCase() + currentPath.slice(2)} | Fayol's Principles`;
+    }
+    document.title = title;
+  }, [currentPath]);
+
+  const renderPage = () => {
+    if (currentPath.startsWith('/principle/')) return <PrincipleDetailPage />;
+    switch (currentPath) {
+      case '/': return <HomePage />;
+      case '/principles': return <PrinciplesPage />;
+      case '/summary': return <SummaryPage />;
+      case '/bibliography': return <BibliographyPage />;
+      default: return (
+          <motion.div className="min-h-screen flex flex-col items-center justify-center text-center p-6 pt-24">
+            <h2 className="text-3xl font-bold text-red-500 mb-4">404 - Not Found</h2>
+            <button onClick={() => navigate('/')} className="bg-teal-600 text-white font-semibold py-2 px-6 rounded-full">Go Home</button>
+          </motion.div>
+        );
+    }
+  };
+
+  return (
+    <ThemeProvider>
+      <AnimatePresence>{loading && <Preloader setLoading={setLoading} />}</AnimatePresence>
+      <div className={`font-sans antialiased text-slate-800 dark:text-slate-200 ${loading ? 'hidden' : ''}`}>
+        <Navbar />
+        <main>
+          <AnimatePresence mode="wait">
+            {renderPage()}
+          </AnimatePresence>
+        </main>
+        <Footer />
+      </div>
+    </ThemeProvider>
+  );
+}
+
+// Default export: The Root App wrapping everything in the Router
+export default function RootApp() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
+}
